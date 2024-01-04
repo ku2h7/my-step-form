@@ -1,80 +1,176 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
-import * as yup from 'yup';
+import { Input, Button } from './../common';
+import * as ValidationSchemas from './../../validations/validationSchemas';
 
 interface InputProps {
-  name: string;
-  address: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
   phoneNumber: string;
-  email?: string;
+  address: string;
 };
 
 const MultiStepForm: React.FC = () => {
-  const validationSchema = yup.object({
-    name: yup.string().required('Name is required'),
-    address: yup.string().required('Address is required'),
-    phoneNumber: yup.string().required('Phone number is required'),
-  });
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
+  const getPartialSchema = (step: number) => {
+    switch (step) {
+      case 1:
+        return ValidationSchemas.Step1Schema;
+      case 2:
+        return ValidationSchemas.Step2Schema;
+      case 3:
+        return ValidationSchemas.Step3Schema;
+      default: 
+        return ValidationSchemas.Step1Schema;
+    }
+  };
 
   const formik = useFormik<InputProps>({
     initialValues: {
-      name: '',
-      address: '',
+      firstname: '',
+      lastname: '',
+      email: '',
+      password: '',
       phoneNumber: '',
+      address: '',
     },
-    validationSchema: validationSchema,
+    validationSchema: getPartialSchema(currentStep),
     onSubmit: (values, {resetForm}) => {
       console.log(values)
       resetForm();
+      setCurrentStep(1);
     }
   });
 
   console.log(formik)
 
+  const handlePrevStep = () => {
+    setCurrentStep((prevStep) => Math.max(prevStep - 1, 1));
+  }
+
+  const handleNextStep = () => {
+    formik.validateForm(formik.values).then((errors) => {
+      if (Object.keys(errors).length === 0) {
+        setCurrentStep((prevStep) => Math.min(prevStep + 1, 3));
+      }
+    })
+  }
+
   return (
     <>
       <div>Ini Multi Step Form</div>
       <form onSubmit={formik.handleSubmit}>
-        <div>
-          <label htmlFor="">Name:</label>
-          <input 
-            type="text"
-            id="name"
-            name="name"
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.name}
+        {currentStep === 1 && (
+          <>
+            <Input
+              label='Firstname'
+              id='firstname'
+              name='firstname'
+              type='text'
+              value={formik.values.firstname}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.firstname || false}
+              error={formik.errors.firstname}
+            />
+            <Input
+              label='Lastname'
+              id='lastname'
+              name='lastname'
+              type='text'
+              value={formik.values.lastname}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.lastname || false}
+              error={formik.errors.lastname}
+            />
+          </>
+        )}
+
+        {currentStep === 2 && (
+          <>
+            <Input
+              label='Email'
+              id='email'
+              name='email'
+              type='text'
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.email || false}
+              error={formik.errors.email}
+            />
+            <Input
+              label='Password'
+              id='password'
+              name='password'
+              type='text'
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.password || false}
+              error={formik.errors.password}
+            />
+          </>
+        )}
+
+        {currentStep === 3 && (
+          <>
+            <Input
+              label='Phone Number'
+              id='phoneNumber'
+              name='phoneNumber'
+              type='text'
+              value={formik.values.phoneNumber}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.phoneNumber || false}
+              error={formik.errors.phoneNumber}
+            />
+            <Input
+              label='Address'
+              id='address'
+              name='address'
+              type='text'
+              value={formik.values.address}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              touched={formik.touched.address || false}
+              error={formik.errors.address}
+            />
+          </>
+        )}
+
+        {currentStep > 1 && (
+          <Button 
+            label='Previous'
+            type='button'
+            onClick={handlePrevStep}
+            disabled={Object.keys(formik.errors).length > 0}
           />
-          {formik.touched.name && formik.errors.name ? (<div>{formik.errors.name}</div>) : null}
-        </div>
-        <div>
-          <label htmlFor="">Address:</label>
-          <input 
-            type="text"
-            id="address"
-            name="address"
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.address}
+        )}
+
+        {currentStep < 3 && (
+          <Button 
+            label='Next'
+            type='button'
+            onClick={handleNextStep}
+            disabled={Object.keys(formik.errors).length > 0}
           />
-          {formik.touched.address && formik.errors.address ? (<div>{formik.errors.address}</div>) : null}
-        </div>
-        <div>
-          <label htmlFor="">Phone Number:</label>
-          <input 
-            type="text"
-            id="phoneNumber"
-            name="phoneNumber"
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.phoneNumber}
+        )}
+
+        {currentStep === 3 && (
+          <Button
+            label='Submit'
+            type='submit'
           />
-          {formik.touched.phoneNumber && formik.errors.phoneNumber ? (<div>{formik.errors.phoneNumber}</div>) : null}
-        </div>
-        <button type="submit">Submit</button>
+        )}
       </form>
     </>
   )
 }
 
-export default MultiStepForm
+export default MultiStepForm;
